@@ -1,0 +1,14 @@
+{% include "scraper/header.html" %}
+
+{% for new in news %}
+<div>
+    <h1>{{new.title}}</h1>
+    <span style="white-space: pre-line">{{new.body}}</span>
+    <a href="{{new.url}}">Site URL</a>
+    <img src="{{new.img}}" alt="">
+</div>
+{% endfor %}
+    
+
+
+{% include "scraper/footer.html" %}
