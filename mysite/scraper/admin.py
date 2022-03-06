@@ -1,4 +1,4 @@
 from django.contrib import admin
-from .models import WebScraper
+from .models import New
 # Register your models here.
-admin.site.register(WebScraper)
+admin.site.register(New)

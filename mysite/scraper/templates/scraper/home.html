@@ -1,13 +1,47 @@
 {% include "scraper/header.html" %}
 
-{% for new in news %}
 <div>
-    <h1>{{new.title}}</h1>
-    <span style="white-space: pre-line">{{new.body}}</span>
-    <a href="{{new.url}}">Site URL</a>
-    <img src="{{new.img}}" alt="">
+    <h2>Idaho State Journal</h2>
+{% for new in news %}
+    {% if new.site == "IdahoStateJournal" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
 </div>
+    {% endif %}
 {% endfor %}
+</div>
+<div>
+    <h2>East Idaho News</h2>
+{% for new in news %}
+    {% if new.site == "EastIdahoNews" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
+</div>
+    {% endif %}
+{% endfor %}
+</div>
+<div>
+    <h2>Yahoo News</h2>
+{% for new in news %}
+    {% if new.site == "YahooNews" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
+</div>
+    {% endif %}
+{% endfor %}
+</div>
     
 
 
