@@ -6,13 +6,14 @@ from .models import New
 import re
 from time import sleep
 from datetime import datetime
+from requests_html import HTMLSession
 
 ISJ_URL = "https://www.idahostatejournal.com/"
 EIN_URL = "https://www.eastidahonews.com/"
 YAHOO_URL = "https://news.yahoo.com/"
 NYT_URL = "https://www.nytimes.com/"
 AP_URL = "https://apnews.com/"
-CNN_URL = "https://www.cnn.com/"
+CNN_URL = "https://www.cnn.com"
 header = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     "Accept-Language": "en-US,en;q=0.5"
@@ -206,9 +207,14 @@ def update_associated_press_db():
 
 
 def update_cnn_db():
-    res = requests.get(CNN_URL, headers=header)
-    soup = BeautifulSoup(res.text, "html.parser")
-    a = soup.find_all("a")
+    session = HTMLSession()
+    res = session.get(CNN_URL)
+    res = [a for a in res if "2022" in a]
+    print(res)
+    return
+    res = requests.get(CNN_URL+ "/us", headers=header)
+    soup = BeautifulSoup(res.text, "html5lib")
+    a = soup.find_all("div", attrs={"class": "column zn__column--idx-1"})
     urls = [url.get("href") for url in a]
     print(urls)
     return
