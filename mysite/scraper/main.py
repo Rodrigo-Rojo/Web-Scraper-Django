@@ -1,18 +1,23 @@
 from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 import requests
 from .models import New
 import re
+from time import sleep
 from datetime import datetime
-
 
 ISJ_URL = "https://www.idahostatejournal.com/"
 EIN_URL = "https://www.eastidahonews.com/"
 YAHOO_URL = "https://news.yahoo.com/"
+NYT_URL = "https://www.nytimes.com/"
+AP_URL = "https://apnews.com/"
+CNN_URL = "https://www.cnn.com/"
 header = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
-    "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8"
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
+    "Accept-Language": "en-US,en;q=0.5"
 }
+year = datetime.now().year
 
 
 def update_idaho_state_journal_db():
@@ -45,7 +50,7 @@ def update_idaho_state_journal_db():
                        img=new_img,
                        url=url,
                        site="IdahoStateJournal",
-                       date=datetime.now()
+                       date=timezone.now()
                        )
             news.save()
             print(f"{new_title_formatted} has been saved successfully.")
@@ -54,11 +59,9 @@ def update_idaho_state_journal_db():
 def update_east_idaho_news_db():
     res = requests.get(EIN_URL, headers=header)
     soup = BeautifulSoup(res.text, "html.parser")
-    main_new_url = soup.find("a", id="featuredStoryLink")
-    news = soup.find_all("figure", class_="subfeaturedPic")
-    urls = [url.a.get('href') for url in news]
-    urls.insert(0, main_new_url.get("href"))
-
+    a = soup.find_all("a")
+    urls = [url.get("href") for url in a if url.get("href") is not None and str(year) in url.get("href")]
+    urls = list(dict.fromkeys(urls))
     for url in urls:
         try:
             res = requests.get(url, headers=header)
@@ -70,7 +73,7 @@ def update_east_idaho_news_db():
             except AttributeError:
                 img = "https://s3-assets.eastidahonews.com/wp-content/uploads/2017/09/25103716/EINLogo_1024x1024.jpg"
             body = soup.find("div", id="articleText").get_text()
-            time = datetime.strptime(soup.find("time").get_text(), "%I:%M %p, %B %d, %Y")
+            time = timezone.datetime.strptime(soup.find("time").get_text(), "%I:%M %p, %B %d, %Y")
             try:
                 if New.objects.get(title=title):
                     print(f"[DATABASE] - {title} in database")
@@ -91,14 +94,10 @@ def update_east_idaho_news_db():
 def update_yahoo_news_db():
     res = requests.get(YAHOO_URL, headers=header)
     soup = BeautifulSoup(res.text, "html.parser")
-    ul = soup.find("ul", attrs={"class": "Pstart(0)"})
-    ul_urls = [url.a.get('href') for url in ul]
-    main_new = soup.find("a", attrs={"class": "js-content-viewer"}).get("href")
-    all_news = soup.find_all("a", attrs={"class": "js-content-viewer"})
-    ul_urls.insert(0, main_new)
-    urls = ul_urls + [url.get('href') for url in all_news]
-    urls = list(dict.fromkeys([f"https://news.yahoo.com{url}" for url in urls if not url.startswith("https")]))
-
+    a = soup.find_all("a")
+    urls = [url.get("href") for url in a if
+            url.get("href").endswith(".html") and not url.get("href").startswith("https://legal")]
+    urls = [f"https://news.yahoo.com{url}" for url in urls if not url.startswith("https")]
     for url in urls:
         try:
             res = requests.get(url, headers=header)
@@ -106,9 +105,10 @@ def update_yahoo_news_db():
             soup = BeautifulSoup(site_html, "html.parser")
             title = soup.find("h1").get_text()
             body = soup.find("div", attrs={"class": "caas-body"}).get_text()
-            time_published = datetime.strptime(soup.find("time").get_text(), "%B %d, %Y, %I:%M %p")
-            img = soup.find("div", attrs={"class": "caas-img-container"}).img.get("src")
-            if img is None:
+            time = timezone.datetime.strptime(soup.find("time").get_text(), "%B %d, %Y, %I:%M %p")
+            try:
+                img = soup.find("div", attrs={"class": "caas-img-container"}).img.get("src")
+            except AttributeError:
                 img = "https://s.yimg.com/os/creatr-uploaded-images/2021-02/3b8ac110-7263-11eb-affd-ceae64845733"
             try:
                 if New.objects.get(title=title):
@@ -118,10 +118,123 @@ def update_yahoo_news_db():
                            body=body,
                            img=img,
                            url=url,
-                           date=time_published,
+                           date=time,
                            site="YahooNews"
                            )
                 news.save()
                 print(f"{title} has been saved successfully.")
+        except Exception as e:
+            print(e)
+            break
+
+
+def update_new_york_times_db():
+    res = requests.get(NYT_URL, headers=header)
+    soup = BeautifulSoup(res.text, "html.parser")
+    a = soup.find_all("a")
+    urls = [url.get("href") for url in a if str(year) in url.get("href") and "live" not in url.get("href")]
+    urls = list(dict.fromkeys(urls))
+    for url in urls:
+        res = requests.get(url, headers=header)
+        site_html = res.text
+        soup = BeautifulSoup(site_html, "html.parser")
+        try:
+            title = soup.find("h1").get_text()
         except AttributeError:
-            img = "https://s.yimg.com/os/creatr-uploaded-images/2021-02/3b8ac110-7263-11eb-affd-ceae64845733"
+            continue
+        body = soup.find_all("p")
+        body = " ".join([i.get_text() for i in body])
+        try:
+            time = datetime.strptime(soup.find("time").get("datetime")[:-5], "%Y-%m-%dT%H:%M:%S")
+        except TypeError:
+            time = datetime.now()
+        except ValueError:
+            time = datetime.now()
+        try:
+            img = soup.find_all("img")[1].get("src")
+        except IndexError:
+            img = "https://m.media-amazon.com/images/I/31B-jyc2D5L._SY445_SX342_.jpg"
+        except AttributeError:
+            img = "https://m.media-amazon.com/images/I/31B-jyc2D5L._SY445_SX342_.jpg"
+        try:
+            if New.objects.get(title=title):
+                print(f"[DATABASE] - {title} in database")
+        except ObjectDoesNotExist:
+            news = New(title=title,
+                       body=body,
+                       img=img,
+                       url=url,
+                       date=time,
+                       site="NewYorkTimes"
+                       )
+            news.save()
+            print(f"{title} has been saved successfully.")
+        sleep(1)
+
+
+def update_associated_press_db():
+    res = requests.get(AP_URL, headers=header)
+    soup = BeautifulSoup(res.text, "html.parser")
+    a = soup.find_all("a")
+    urls = [url.get("href") for url in a if url.get("href").startswith("/article/")]
+    urls = list(dict.fromkeys(urls))
+    urls = [f"https://apnews.com{url}" for url in urls if not url.startswith("https")]
+    for url in urls:
+        res = requests.get(url, headers=header)
+        site_html = res.text
+        soup = BeautifulSoup(site_html, "html.parser")
+        title = soup.find("h1").get_text()
+        try:
+            body = soup.find("div", attrs={"class": "Article"}).get_text()
+        except AttributeError:
+            continue
+        time = timezone.datetime.strptime(soup.find("span", attrs={"class": "Timestamp"}).get("data-source")[:-1], "%Y-%m-%dT%H:%M:%S")
+        img = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Associated_Press_logo_2012.svg/1200px-Associated_Press_logo_2012.svg.png"
+        try:
+            if New.objects.get(title=title):
+                print(f"[DATABASE] - {title} in database")
+        except ObjectDoesNotExist:
+            news = New(title=title,
+                       body=body,
+                       img=img,
+                       url=url,
+                       date=time,
+                       site="AssociatedPress"
+                       )
+            news.save()
+            print(f"{title} has been saved successfully.")
+
+
+def update_cnn_db():
+    res = requests.get(CNN_URL, headers=header)
+    soup = BeautifulSoup(res.text, "html.parser")
+    a = soup.find_all("a")
+    urls = [url.get("href") for url in a]
+    print(urls)
+    return
+    urls = list(dict.fromkeys(urls))
+    urls = [f"https://apnews.com{url}" for url in urls if not url.startswith("https")]
+    for url in urls:
+        res = requests.get(url, headers=header)
+        site_html = res.text
+        soup = BeautifulSoup(site_html, "html.parser")
+        title = soup.find("h1").get_text()
+        try:
+            body = soup.find("div", attrs={"class": "Article"}).get_text()
+        except AttributeError:
+            continue
+        time = timezone.datetime.strptime(soup.find("span", attrs={"class": "Timestamp"}).get("data-source")[:-1], "%Y-%m-%dT%H:%M:%S")
+        img = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Associated_Press_logo_2012.svg/1200px-Associated_Press_logo_2012.svg.png"
+        try:
+            if New.objects.get(title=title):
+                print(f"[DATABASE] - {title} in database")
+        except ObjectDoesNotExist:
+            news = New(title=title,
+                       body=body,
+                       img=img,
+                       url=url,
+                       date=time,
+                       site="AssociatedPress"
+                       )
+            news.save()
+            print(f"{title} has been saved successfully.")
