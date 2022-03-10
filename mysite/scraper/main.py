@@ -6,7 +6,11 @@ from .models import New
 import re
 from time import sleep
 from datetime import datetime
-from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
 
 ISJ_URL = "https://www.idahostatejournal.com/"
 EIN_URL = "https://www.eastidahonews.com/"
@@ -18,7 +22,7 @@ header = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:97.0) Gecko/20100101 Firefox/97.0",
     "Accept-Language": "en-US,en;q=0.5"
 }
-year = datetime.now().year
+year = str(datetime.now().year)
 
 
 def update_idaho_state_journal_db():
@@ -207,30 +211,32 @@ def update_associated_press_db():
 
 
 def update_cnn_db():
-    session = HTMLSession()
-    res = session.get(CNN_URL)
-    res = [a for a in res if "2022" in a]
-    print(res)
-    return
-    res = requests.get(CNN_URL+ "/us", headers=header)
-    soup = BeautifulSoup(res.text, "html5lib")
-    a = soup.find_all("div", attrs={"class": "column zn__column--idx-1"})
-    urls = [url.get("href") for url in a]
-    print(urls)
-    return
-    urls = list(dict.fromkeys(urls))
-    urls = [f"https://apnews.com{url}" for url in urls if not url.startswith("https")]
+    options = Options()
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(executable_path="/snap/bin/chromium.chromedriver", options=options)
+    driver.get(CNN_URL)
+    assert "CNN - Breaking News, Latest News and Videos" in driver.title
+    a = driver.find_elements(By.TAG_NAME, "a")
+    urls = [url.get_attribute("href") for url in a
+            if url.get_attribute("href") is not None
+            and year in url.get_attribute("href")
+            and "election" not in url.get_attribute("href")]
     for url in urls:
-        res = requests.get(url, headers=header)
-        site_html = res.text
-        soup = BeautifulSoup(site_html, "html.parser")
-        title = soup.find("h1").get_text()
-        try:
-            body = soup.find("div", attrs={"class": "Article"}).get_text()
-        except AttributeError:
-            continue
-        time = timezone.datetime.strptime(soup.find("span", attrs={"class": "Timestamp"}).get("data-source")[:-1], "%Y-%m-%dT%H:%M:%S")
-        img = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Associated_Press_logo_2012.svg/1200px-Associated_Press_logo_2012.svg.png"
+        print(url)
+        driver.get(url)
+        sleep(5)
+        print(driver.title)
+        title = driver.find_element(by=By.TAG_NAME, value="h1").text
+        body = driver.find_element(by=By.CLASS_NAME, value="l-container").text
+        time = driver.find_element(by=By.CLASS_NAME, value="update-time").text
+        if "Updated" in time:
+            time = time[8:]
+        time = timezone.datetime.strptime(time, "%I:%M %Z, %a %B %-d, %Y")
+        print(time)
+        break
+        img = [i.get_attribute("src") for i in driver.find_elements(by=By.TAG_NAME, value="img")
+               if "cnnnext/dam/assets/" in i.get_attribute("src")
+               and not "small" in i.get_attribute("src")][0]
         try:
             if New.objects.get(title=title):
                 print(f"[DATABASE] - {title} in database")
