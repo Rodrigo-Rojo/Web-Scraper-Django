@@ -70,6 +70,20 @@
     {% endif %}
 {% endfor %}
 </div>
+<div>
+    <h2>CNN</h2>
+{% for new in news %}
+    {% if new.site == "CNN" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
+</div>
+    {% endif %}
+{% endfor %}
+</div>
     
 
 

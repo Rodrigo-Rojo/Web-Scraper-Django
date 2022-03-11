@@ -10,6 +10,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, WebDriverException
+
 
 
 ISJ_URL = "https://www.idahostatejournal.com/"
@@ -210,43 +212,59 @@ def update_associated_press_db():
             print(f"{title} has been saved successfully.")
 
 
+def update_data(urls, driver):
+
+    for url in urls:
+        try:
+            driver.get(url)
+            title = driver.title
+            body = driver.find_element(by=By.CLASS_NAME, value="l-container").text
+            time = driver.find_element(by=By.CLASS_NAME, value="update-time").text
+            if "Updated" in time:
+                time = time[8:]
+            time = timezone.datetime.strptime(time, "%I:%M %p ET, %a %B %d, %Y")
+            img = [i.get_attribute("src") for i in driver.find_elements(by=By.TAG_NAME, value="img")
+                   if "cnnnext/dam/assets/" in i.get_attribute("src")
+                   and not "small" in i.get_attribute("src")][0]
+            try:
+                if New.objects.get(title=title):
+                    print(f"[DATABASE] - {title} in database")
+            except ObjectDoesNotExist:
+                news = New(title=title,
+                           body=body,
+                           img=img,
+                           url=url,
+                           date=time,
+                           site="CNN"
+                           )
+                news.save()
+                print(f"{title} has been saved successfully.")
+        except WebDriverException:
+            driver.quit()
+            sleep(2)
+            options = Options()
+            options.add_argument("--headless")
+            driver = webdriver.Chrome(executable_path="/snap/bin/chromium.chromedriver", options=options)
+            continue
+
+
 def update_cnn_db():
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument("—disable-gpu")
+    options.add_argument("--window-size=1280,720")
+    options.add_argument("--no-sandbox")
+    options.headless = True
+
     driver = webdriver.Chrome(executable_path="/snap/bin/chromium.chromedriver", options=options)
     driver.get(CNN_URL)
-    assert "CNN - Breaking News, Latest News and Videos" in driver.title
     a = driver.find_elements(By.TAG_NAME, "a")
     urls = [url.get_attribute("href") for url in a
             if url.get_attribute("href") is not None
             and year in url.get_attribute("href")
-            and "election" not in url.get_attribute("href")]
-    for url in urls:
-        print(url)
-        driver.get(url)
-        sleep(5)
-        print(driver.title)
-        title = driver.find_element(by=By.TAG_NAME, value="h1").text
-        body = driver.find_element(by=By.CLASS_NAME, value="l-container").text
-        time = driver.find_element(by=By.CLASS_NAME, value="update-time").text
-        if "Updated" in time:
-            time = time[8:]
-        time = timezone.datetime.strptime(time, "%I:%M %Z, %a %B %-d, %Y")
-        print(time)
-        break
-        img = [i.get_attribute("src") for i in driver.find_elements(by=By.TAG_NAME, value="img")
-               if "cnnnext/dam/assets/" in i.get_attribute("src")
-               and not "small" in i.get_attribute("src")][0]
-        try:
-            if New.objects.get(title=title):
-                print(f"[DATABASE] - {title} in database")
-        except ObjectDoesNotExist:
-            news = New(title=title,
-                       body=body,
-                       img=img,
-                       url=url,
-                       date=time,
-                       site="AssociatedPress"
-                       )
-            news.save()
-            print(f"{title} has been saved successfully.")
+            and "election" not in url.get_attribute("href")
+            and "videos" not in url.get_attribute("href")
+            and "gallery" not in url.get_attribute("href")
+            and "financebuzz" not in url.get_attribute("href")]
+    urls = list(dict.fromkeys(urls))
+    update_data(urls, driver)
+
