@@ -84,7 +84,34 @@
     {% endif %}
 {% endfor %}
 </div>
-    
+<div>
+    <h2>Sky News</h2>
+{% for new in news %}
+    {% if new.site == "SkyNews" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
+</div>
+    {% endif %}
+{% endfor %}
+</div>
+<div>
+    <h2>Washington Post</h2>
+{% for new in news %}
+    {% if new.site == "WashingtonPost" %}
+<div>
+    <a href="{{new.url}}">{{new.title}}</a>
+<!--    <img src="{{new.img}}" alt="">-->
+<!--    {{new.date}}-->
+<!--    <span style="white-space: pre-line">{{new.body}}</span>-->
+
+</div>
+    {% endif %}
+{% endfor %}
+</div>
 
 
 {% include "scraper/footer.html" %}
