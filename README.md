@@ -1,9 +1,10 @@
-# Web Scraper News Site
+# Content Aggregator
 ### Technologies Used:
 
+- Python
 - Django
-- BeautifulSoup
-- SQLite3
 - HTML
 - CSS
-- Python
+- SQLite3
+- BeautifulSoup
+- Selenium
