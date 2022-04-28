@@ -1,0 +1,155 @@
+{% include "scraper/header.html" %}
+<div class="container-n">
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'Idaho State Journal' %}"><h2 class="mid">Idaho State Journal</h2></a>
+        </div>
+        {% for new in isj %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                    
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                     <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'East Idaho News' %}"><h2 class="mid">East Idaho News</h2></a>
+
+        </div>
+        {% for new in ein %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'Yahoo News' %}"><h2 class="mid">Yahoo News</h2></a>
+                    
+        </div>
+        {% for new in yh %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'New York Times' %}"><h2 class="mid">New York Times</h2></a>
+                </div>
+        {% for new in nyt %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'Associated Press' %}"><h2 class="mid">Associated Press</h2></a>
+                </div>
+        {% for new in ap %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'CNN' %}"><h2 class="mid">CNN</h2></a>
+                </div>
+        {% for new in cnn %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'Sky News' %}"><h2 class="mid">Sky News</h2></a>
+                </div>
+        {% for new in sky %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="news-container">
+        <div class="link">
+            <a href="{% url 'news_site' 'Washington Post' %}"><h2 class="mid">Washington Post</h2></a>
+                </div>
+        {% for new in wp %}
+            <div class="new-data-container">
+                <div class="link">
+                    <a href="{{new.url}}">{{new.title}}</a>
+                </div>
+                <div class="new-data">
+                    <img src="{{new.img}}" alt="">
+                    <span>{{new.date}}</span><br>
+                    <span style="white-space: pre-line">{{new.body}}</span>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+{% include "scraper/footer.html" %}
