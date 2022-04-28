@@ -10,6 +10,9 @@ year = str(datetime.now().year)
 
 def index(request):
     news = New.objects.all().order_by("-date")
+    for new in New.objects.values_list('title', flat=True).distinct():
+        New.objects.filter(pk__in=New.objects.filter(title=new).values_list('id', flat=True)[1:]).delete()
+
     ap = [new for new in news.order_by("-date") if new.site == "Associated Press"][:10]
     wp = [new for new in news.order_by("-date") if new.site == "Washington Post"][:10]
     sky = [new for new in news.order_by("-date") if new.site == "Sky News"][:10]
