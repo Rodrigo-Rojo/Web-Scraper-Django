@@ -4,6 +4,7 @@ from .scraper import *
 
 def start():
     scheduler = BackgroundScheduler()
+    timer = 10
     jobs = (update_idaho_state_journal_db,
             update_cnn_db,
             update_sky_news_db,
@@ -11,8 +12,11 @@ def start():
             update_washington_post_db,
             update_associated_press_db,
             update_east_idaho_news_db,
-            update_washington_post_db)
+            update_new_york_times_db)
+
     for job in jobs:
-        scheduler.add_job(job, 'interval', minutes=60)
+        scheduler.add_job(job, 'interval', minutes=timer)
+        timer += 1
+        print(job)
 
     scheduler.start()
