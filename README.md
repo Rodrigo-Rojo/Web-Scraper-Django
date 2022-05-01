@@ -5,6 +5,6 @@
 - Django
 - HTML
 - CSS
-- SQLite3
+- PostgreSQL
 - BeautifulSoup
 - Selenium
